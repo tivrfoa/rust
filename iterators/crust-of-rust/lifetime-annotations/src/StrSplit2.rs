@@ -1,11 +1,11 @@
 
 #[derive(Debug)]
-pub struct StrSplit<'haystack, 'delimiter> {
-    remainder: Option<&'haystack str>,
-    delimiter: &'delimiter str,
+pub struct StrSplit2<'a> {
+    remainder: Option<&'a str>,
+    delimiter: &'a str,
 }
 
-impl<'haystack, 'delimiter> StrSplit<'haystack, 'delimiter> {
+impl<'haystack, 'delimiter> StrSplit2<'haystack, 'delimiter> {
     pub fn new(haystack: &'haystack str, delimiter: &'delimiter str) -> Self {
         Self {
             remainder: Some(haystack),
@@ -14,7 +14,7 @@ impl<'haystack, 'delimiter> StrSplit<'haystack, 'delimiter> {
     }
 }
 
-impl<'haystack> Iterator for StrSplit<'haystack, '_> {
+impl<'haystack, 'delimiter> Iterator for StrSplit2<'haystack, 'delimiter> {
     type Item = &'haystack str;
     fn next(&mut self) -> Option<Self::Item> {
         if let Some(ref mut remainder) = self.remainder {
@@ -32,8 +32,8 @@ impl<'haystack> Iterator for StrSplit<'haystack, '_> {
     }
 }
 
-fn until_char(s: &str, c: char) -> &str {
-    StrSplit::new(s, &format!("{}", c))
+fn until_char2(s: &str, c: char) -> &str {
+    StrSplit2::new(s, &format!("{}", c))
         .next()
         .expect("one result")
 }
@@ -47,11 +47,11 @@ fn until_char_test() {
 fn it_works() {
     let haystack = "a b c d e";
 
-    let letters = StrSplit::new(haystack, " ");
+    let letters = StrSplit2::new(haystack, " ");
     assert!(letters.eq(vec!["a", "b", "c", "d", "e"].into_iter()));
-
+    
     // The 2 lines above are equivalent to:
-    let letters2: Vec<_> = StrSplit::new(haystack, " ").collect();
+    let letters2: Vec<_> = StrSplit2::new(haystack, " ").collect();
     assert_eq!(letters2, vec!["a", "b", "c", "d", "e"]);
 
     //for l in letters {
@@ -63,7 +63,7 @@ fn it_works() {
 fn tail() {
     let haystack = "a b c d ";
 
-    let letters = StrSplit::new(haystack, " ");
+    let letters = StrSplit2::new(haystack, " ");
     assert!(letters.eq(vec!["a", "b", "c", "d", ""].into_iter()));
 
 
@@ -77,6 +77,6 @@ fn tail() {
 fn empty_tail() {
     let haystack = "a b c d";
 
-    let letters = StrSplit::new(haystack, " ");
+    let letters = StrSplit2::new(haystack, " ");
     assert!(letters.eq(vec!["a", "b", "c", "d"].into_iter()));
 }
