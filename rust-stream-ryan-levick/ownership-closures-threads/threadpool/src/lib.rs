@@ -1,5 +1,15 @@
 use std::sync::mpsc::channel;
+
+// Mutex is needed because receiver is not Sync.
+// That means it can can't be used by many threads
+// at the same time.
 use std::sync::Mutex;
+
+// It allows multiple owners.
+// The thing that it contains will only be destroyed
+// when all of the different references have been
+// dropped.
+use std::sync::Arc;
 
 /**
  * He uses: VSCode with Rust Analyzer
@@ -40,20 +50,23 @@ impl ThreadPool {
 		// parentheses are needed in order to declare its
 		// arguments.
 		//
-		let (sender, receiver) = channel::<Box<dyn Fn()>>();
-		let receiver = Mutex::new(receiver);
+		let (sender, receiver) = channel::<Box<dyn Fn() + Send>>();
+		let receiver = Arc::new(Mutex::new(receiver));
 		let mut _handles = vec![];
 		
 		for _ in 0..num_threads {
-			let handle = std::thread::spawn(|| {
+			// clone() increments the reference counter.
+			let clone = receiver.clone();
+			let handle = std::thread::spawn(move || {
 				loop {
 					// check for work
-					let work = receiver.lock().unwrap().recv().unwrap();
+					let work = clone.lock().unwrap().recv().unwrap();
 					work();
 				}
 			});
 			_handles.push(handle);
 		}
+
 		Self {
 			_handles
 		}
