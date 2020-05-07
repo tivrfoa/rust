@@ -39,10 +39,11 @@ macro_rules! avec {
 
 	// If you sorround some part of your pattern
 	// with dollar and then parentheses, then you can give
-	// a delimiter and then either * or +
+	// a delimiter and then either * or + or ?
 	// The pattern below means one or more comma separated
 	// things.
-	($($elements:expr),+) => {{
+	// ? means 0 or 1
+	($($elements:expr),+ $(,)?) => {{
 		let mut vs = Vec::new();
 		$(vs.push($elements);)+
 		vs
@@ -76,6 +77,15 @@ fn double() {
 	let x: Vec<u32> = avec![42, 43];
 	assert!(!x.is_empty());
 	assert_eq!(x.len(), 2);
+	assert_eq!(x[0], 42);
+	assert_eq!(x[1], 43);
+}
+
+#[test]
+fn trailing() {
+	let x: Vec<u32> = avec![42, 43, 1987, 33,];
+	assert!(!x.is_empty());
+	assert_eq!(x.len(), 4);
 	assert_eq!(x[0], 42);
 	assert_eq!(x[1], 43);
 }
