@@ -24,7 +24,7 @@ use std::sync::Arc;
  */
 pub struct ThreadPool {
 	_handles: Vec<std::thread::JoinHandle<()>>,
-	sender: Sender<Box<dyn Fn() + Send>>,
+	sender: Sender<Box<dyn FnMut() + Send>>,
 }
 
 impl ThreadPool {
@@ -51,7 +51,7 @@ impl ThreadPool {
 		// parentheses are needed in order to declare its
 		// arguments.
 		//
-		let (sender, receiver) = channel::<Box<dyn Fn() + Send>>();
+		let (sender, receiver) = channel::<Box<dyn FnMut() + Send>>();
 		let receiver = Arc::new(Mutex::new(receiver));
 		let mut _handles = vec![];
 		
@@ -61,7 +61,7 @@ impl ThreadPool {
 			let handle = std::thread::spawn(move || {
 				loop {
 					// check for work
-					let work = match clone.lock().unwrap().recv() {
+					let mut work = match clone.lock().unwrap().recv() {
 						Ok(work) => work,
 						Err(_) => break
 					};
@@ -81,7 +81,7 @@ impl ThreadPool {
 
 	// needs & here, otherwise the first call
 	// to execute would move the ownership
-	pub fn execute<T: Fn() + Send + 'static>(&self, work: T) {
+	pub fn execute<T: FnMut() + Send + 'static>(&self, work: T) {
 		self.sender.send(Box::new(work)).unwrap();
 	}
 }
@@ -92,10 +92,24 @@ mod tests {
 
     #[test]
     fn it_works() {
+		use std::sync::atomic::{AtomicU32, Ordering};
+
+		let n = AtomicU32::new(0);
+		let nref = Arc::new(n);
+		let clone = nref.clone();
 		let pool = ThreadPool::new(10);
+
+		let closure = move || {
+			clone.fetch_add(1, Ordering::SeqCst);
+		};
+		pool.execute(closure.clone());
+		pool.execute(closure);
+
 		pool.execute(|| std::thread::sleep(std::time::Duration::from_secs(1)));
 		pool.execute(|| println!("Hello from thread"));
 		std::thread::sleep(std::time::Duration::from_secs(3));
+
+		assert_eq!(nref.load(Ordering::SeqCst), 2);
     }
 }
 
