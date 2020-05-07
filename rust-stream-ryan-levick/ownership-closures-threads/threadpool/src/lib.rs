@@ -61,7 +61,10 @@ impl ThreadPool {
 			let handle = std::thread::spawn(move || {
 				loop {
 					// check for work
-					let work = clone.lock().unwrap().recv().unwrap();
+					let work = match clone.lock().unwrap().recv() {
+						Ok(work) => work,
+						Err(_) => break
+					};
 					println!("Start");
 					work();
 					println!("End");
@@ -92,7 +95,7 @@ mod tests {
 		let pool = ThreadPool::new(10);
 		pool.execute(|| std::thread::sleep(std::time::Duration::from_secs(1)));
 		pool.execute(|| println!("Hello from thread"));
-		std::thread::sleep(std::time::Duration::from_secs(5))
+		std::thread::sleep(std::time::Duration::from_secs(3));
     }
 }
 
