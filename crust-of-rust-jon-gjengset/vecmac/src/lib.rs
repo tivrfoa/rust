@@ -1,4 +1,3 @@
-
 /**
  * For this tutorial, is recommended to install the
  * follow extension:
@@ -89,3 +88,48 @@ fn trailing() {
 	assert_eq!(x[0], 42);
 	assert_eq!(x[1], 43);
 }
+
+
+trait MaxValue {
+	fn max_value() -> Self;
+}
+
+macro_rules! max_impl {
+	($t:ty) => { // ty stands for type
+		impl $crate::MaxValue for $t {
+			fn max_value() -> Self {
+				<$t>::MAX
+			}
+		}
+	}
+}
+
+max_impl!(u32);
+max_impl!(i32);
+max_impl!(u64);
+max_impl!(i64);
+
+#[test]
+fn test_max_value() {
+	println!("{}", u32::max_value());
+	println!("{}", i32::max_value());
+	println!("{}", u64::max_value());
+	println!("{}", i64::max_value());
+
+	println!("u64 / u32 = {}", u64::max_value() / u32::max_value() as u64);
+	// println!("u64 / u32 = {}", u64::max_value() / u32::max_value());
+}
+
+/* does not work ...
+use std::ops::Div;
+
+type uint = u64;
+
+impl Div for uint {
+	type Output = Self;
+
+	fn div(self, rhs: u32) -> Self::Output {
+		self / rhs as u64
+	}
+}
+*/
