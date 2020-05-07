@@ -47,6 +47,14 @@ macro_rules! avec {
 		$(vs.push($elements);)+
 		vs
 	}};
+
+	($element:expr; $count:expr) => {{
+		let mut vs = Vec::new();
+		for _ in 0..$count {
+			vs.push($element);
+		}
+		vs
+	}};
 }
 
 #[test]
@@ -87,6 +95,14 @@ fn trailing() {
 	assert_eq!(x.len(), 4);
 	assert_eq!(x[0], 42);
 	assert_eq!(x[1], 43);
+}
+
+#[test]
+fn test_count() {
+	let x: Vec<u32> = avec![33; 10];
+	assert_eq!(x.len(), 10);
+	assert_eq!(x[0], 33);
+	assert_eq!(x[9], 33);
 }
 
 
