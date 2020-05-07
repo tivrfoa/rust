@@ -19,10 +19,23 @@
  * Identifiers are used for passing names to macros.
  *
  */
+#[macro_export] // allows other libraries to use it
 macro_rules! avec {
 	($x:ident) => {
 		$x += 1;
 	};
+
+	() => {
+		Vec::new()
+	};
+
+	// You can use blocks to declare variables and write
+	// other expressions
+	($element:expr) => {{
+		let mut vs = Vec::new();
+		vs.push($element);
+		vs
+	}};
 }
 
 #[test]
@@ -31,4 +44,18 @@ fn foo() {
 	avec!(x);
 	println!("{}", x);
 	assert_eq!(x, 43);
+}
+
+#[test]
+fn empty_vec() {
+	let x: Vec<u32> = avec![];
+	assert!(x.is_empty());
+}
+
+#[test]
+fn single() {
+	let x: Vec<u32> = avec![42];
+	assert!(!x.is_empty());
+	assert_eq!(x.len(), 1);
+	assert_eq!(x[0], 42);
 }
