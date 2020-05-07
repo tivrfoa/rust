@@ -1,4 +1,4 @@
-use std::sync::mpsc::channel;
+use std::sync::mpsc::{channel, Sender};
 
 // Mutex is needed because receiver is not Sync.
 // That means it can can't be used by many threads
@@ -23,7 +23,8 @@ use std::sync::Arc;
  *
  */
 pub struct ThreadPool {
-	_handles: Vec<std::thread::JoinHandle<()>>
+	_handles: Vec<std::thread::JoinHandle<()>>,
+	sender: Sender<Box<dyn Fn() + Send>>,
 }
 
 impl ThreadPool {
@@ -61,20 +62,25 @@ impl ThreadPool {
 				loop {
 					// check for work
 					let work = clone.lock().unwrap().recv().unwrap();
+					println!("Start");
 					work();
+					println!("End");
 				}
 			});
 			_handles.push(handle);
 		}
 
 		Self {
-			_handles
+			_handles,
+			sender,
 		}
 	}
 
 	// needs & here, otherwise the first call
 	// to execute would move the ownership
-	pub fn execute<T: Fn()>(&self, work: T) {}
+	pub fn execute<T: Fn() + Send + 'static>(&self, work: T) {
+		self.sender.send(Box::new(work)).unwrap();
+	}
 }
 
 #[cfg(test)]
@@ -84,8 +90,9 @@ mod tests {
     #[test]
     fn it_works() {
 		let pool = ThreadPool::new(10);
+		pool.execute(|| std::thread::sleep(std::time::Duration::from_secs(1)));
 		pool.execute(|| println!("Hello from thread"));
-		pool.execute(|| println!("Hello from thread"));
+		std::thread::sleep(std::time::Duration::from_secs(5))
     }
 }
 
