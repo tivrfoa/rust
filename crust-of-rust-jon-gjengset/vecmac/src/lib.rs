@@ -51,6 +51,11 @@ macro_rules! avec {
 		vs
 	}};
 
+	// mapping one macro to another
+	($($element:expr,)*) => {{
+		$crate::avec![$($element),*]
+	}};
+
 	/*
 	 * x variable is needed so it becomes:
 	 *
