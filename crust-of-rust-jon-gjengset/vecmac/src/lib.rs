@@ -3,6 +3,9 @@
  * follow extension:
  * $ cargo install cargo-expand
  *
+ * ... then use it like this:
+ * $ cargo expand --lib --tests
+ *
  * All that matters for the input to a macro is that
  * it can be parsed. And then what matters for compilation
  * is whether the output is valid Rust, because the output
@@ -48,11 +51,28 @@ macro_rules! avec {
 		vs
 	}};
 
+	/*
+	 * x variable is needed so it becomes:
+	 *
+	 *  let mut vs = Vec::new();
+     *  let x = y.take().unwrap();
+     *  for _ in 0..10 {
+     *      vs.push(x.clone());
+     *  }
+     *  vs
+	 */
 	($element:expr; $count:expr) => {{
+		let count = $count;
 		let mut vs = Vec::new();
-		for _ in 0..$count {
-			vs.push($element);
-		}
+		// let mut vs = Vec::with_capacity(count);
+		/*let x = $element; // why this tmp variable is needed
+		for _ in 0..count {
+			vs.push(x.clone());
+		}*/
+		// The code below is faster (?) because it does not
+		// do bounds checking?
+		// vs.extend(std::iter::repeat($element).take(count));
+		vs.resize(count, $element);
 		vs
 	}};
 }
@@ -105,6 +125,15 @@ fn test_count() {
 	assert_eq!(x[9], 33);
 }
 
+#[test]
+fn test_count_non_literal() {
+	let mut y = Some(33);
+	let x: Vec<u32> = avec![y.take().unwrap(); 10];
+	assert_eq!(x.len(), 10);
+	assert_eq!(x[0], 33);
+	assert_eq!(x[9], 33);
+}
+
 
 trait MaxValue {
 	fn max_value() -> Self;
@@ -149,3 +178,30 @@ impl Div for uint {
 	}
 }
 */
+
+/// ``` compile fail
+/// let x: Vec<u32> = vecmac::avec![42, "foo"];
+/// ```
+#[allow(dead_code)]
+struct CompileFailTest;
+
+
+
+#[test]
+fn test_push() {
+		let count = 100000;
+		let mut vs = Vec::with_capacity(count);
+		let x = 33;
+		for _ in 0..count {
+			vs.push(x);
+		}
+		println!("{}", vs[vs.len()-1]);
+}
+
+#[test]
+fn test_repeat() {
+		let count = 100000;
+		let mut vs = Vec::with_capacity(count);
+		vs.extend(std::iter::repeat(33).take(count));
+		println!("{}", vs[vs.len()-1]);
+}
