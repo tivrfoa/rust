@@ -3,7 +3,9 @@ use std::time::SystemTime;
 
 pub trait QueryInterface {
 	fn increment(&mut self, i: usize, j: usize, val: i32);
-	fn minimum(&self, i: usize, j: usize) -> i32;
+	
+	// why mutable reference?
+	fn minimum(&mut self, i: usize, j: usize) -> i32;
 }
 
 pub struct Test;
@@ -45,24 +47,34 @@ impl Test {
 	fn randint(i: i32, j: i32) -> i32 {
 		let fi = i as f32;
 		let fj = j as f32;
-		((Test::random() * (fj - fi + 1.0)) as i32) + i
+		let ri = ((Test::random() * (fj - fi + 1.0)) as i32) + i;
+		assert!(ri >= i && ri <= j, "{} not between {} and {}", ri, i, j);
+
+		ri
 	}
 
+	/// Returns float between 0.0 and 1.0
 	fn random() -> f32 {
 		let now = SystemTime::now();
 		let nano = now.elapsed().unwrap().subsec_nanos();
 		
-		((nano%10) as f32)/10.0
+		let r = ((nano%10) as f32)/10.0;
+		assert!(r >= 0.0 && r <= 1.0, "{} not between 0.0 and 1.0", r);
+
+		r
 	}
 
-	fn run_random_tests(size: i32, num_tests: i32,
+	fn run_random_tests(size: usize, num_tests: usize,
 			rmq1: &mut dyn QueryInterface, rmq2: &mut dyn QueryInterface)
 	{
 		let mut all_passed = true;
 
 		for test_num in 1..num_tests {
 			let type_ = Test::randint(1, 2);
-			let mut range = [Test::randint(0, size-1), Test::randint(0, size-1)];
+			let mut range = [
+				Test::randint(0, (size - 1) as i32),
+				Test::randint(0, (size - 1) as i32)
+			];
 			range.sort();
 
 			if test_num % 10000 == 0 {
@@ -75,7 +87,7 @@ impl Test {
 				rmq2.increment(range[0] as usize, range[1] as usize, val);
 			} else {
 				let r1 = rmq1.minimum(range[0] as usize, range[1] as usize);
-				let r2 = rmq1.minimum(range[0] as usize, range[1] as usize);
+				let r2 = rmq2.minimum(range[0] as usize, range[1] as usize);
 				if r1 != r2 {
 					println!("Failure {} vs {}", r1, r2);
 					all_passed = false;
@@ -91,7 +103,20 @@ impl Test {
 
 fn main() {
 
+	/*
 	Test::run_test1(&mut RangeSlow::new(8));
+	println!("");
+	Test::run_test1(&mut SegmentTree::new(8));
+	*/
+
+	// let size = 1_000;
+	let size = 1_000_000;
+	/*Test::run_random_tests(size, size, &mut RangeSlow::new(size),
+			&mut SegmentTree::new(size));*/
+	// Test::run_random_tests(size, size, &mut SegmentTree::new(size),
+	//		&mut SegmentTree::new(size));
+	Test::run_random_tests(size, size, &mut RangeSlow::new(size),
+			&mut RangeSlow::new(size));
 
 }
 
@@ -116,7 +141,7 @@ impl QueryInterface for RangeSlow {
 		}
 	}
 
-	fn minimum(&self, i: usize, j: usize) -> i32 {
+	fn minimum(&mut self, i: usize, j: usize) -> i32 {
 		let mut res = self.arr[i];
 		for k in i+1..=j {
 			res = min(res, self.arr[k]);
@@ -128,8 +153,8 @@ impl QueryInterface for RangeSlow {
 
 struct SegmentTree {
 	n: usize,
-	lo: Vec<i32>,
-	hi: Vec<i32>,
+	lo: Vec<usize>,
+	hi: Vec<usize>,
 	min: Vec<i32>,
 	delta: Vec<i32>,
 }
@@ -145,12 +170,12 @@ impl SegmentTree {
 			delta: vec![0; 4*n+1],
 		};
 
-		st.init(1, 0, (n-1) as i32);
+		st.init(1, 0, n - 1);
 
 		st
 	}
 
-	fn init(&mut self, i: usize, a: i32, b: i32) {
+	fn init(&mut self, i: usize, a: usize, b: usize) {
 		self.lo[i] = a;
 		self.hi[i] = b;
 
@@ -172,7 +197,7 @@ impl SegmentTree {
 		                  self.min[2*i+1] + self.delta[2*i+1]);
 	}
 
-	fn increment(&mut self, i: usize, a: i32, b: i32, val: i32) {
+	fn increment2(&mut self, i: usize, a: usize, b: usize, val: i32) {
 		if b < self.lo[i] || self.hi[i] < a {
 			return;
 		}
@@ -184,14 +209,14 @@ impl SegmentTree {
 
 		self.prop(i);
 
-		self.increment(2*i, a, b, val);
-		self.increment(2*i+1, a, b, val);
+		self.increment2(2*i, a, b, val);
+		self.increment2(2*i+1, a, b, val);
 
 		self.update(i);
 	}
 
 	// CircularRMQ!
-	fn minimum(&mut self, i: usize, a: i32, b: i32) -> i32 {
+	fn minimum2(&mut self, i: usize, a: usize, b: usize) -> i32 {
 		if b < self.lo[i] || self.hi[i] < a {
 			return i32::MAX;
 		}
@@ -202,11 +227,22 @@ impl SegmentTree {
 
 		self.prop(i);
 
-		let min_left = self.minimum(2*i, a, b);
-		let min_right = self.minimum(2*i+1, a, b);
+		let min_left = self.minimum2(2*i, a, b);
+		let min_right = self.minimum2(2*i+1, a, b);
 
 		self.update(i);
 
 		min(min_left, min_right)
+	}
+}
+
+impl QueryInterface for SegmentTree {
+
+	fn increment(&mut self, i: usize, j: usize, val: i32) {
+		self.increment2(1, i, j, val);
+	}
+
+	fn minimum(&mut self, i: usize, j: usize) -> i32 {
+		self.minimum2(1, i, j)
 	}
 }
