@@ -36,45 +36,21 @@ impl<Item>  Node<Item> {
 	}
 }
 
-#[derive(Debug)]
 struct DoublyLinkedList<Item> {
 	n: usize, // number of elements on list
 	pre: Rc<RefCell<Node<Item>>>, // sentinel before first item
 	post: Rc<RefCell<Node<Item>>>, // sentinel before last item
 }
-/*
+
 impl<Item> Debug for DoublyLinkedList<Item>
 where Item: Debug {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-		let mut pre_none = false;
-		let mut post_none = false;
-		{
-			if self.pre.borrow_mut().item.is_none() {
-				pre_none = true;
-			}
-			if self.post.borrow_mut().item.is_none() {
-				post_none = true;
-			}
-		}
-		if pre_none && post_none {
-			f.debug_struct("DoublyLinkedList")
-				.field("n", &self.n)
-				.finish()
-		} else if pre_none {
-			f.debug_struct("DoublyLinkedList")
-				.field("n", &self.n)
-				.field("pre", &"None")
-				.field("post", &self.post)
-				.finish()
-		} else {
-			f.debug_struct("DoublyLinkedList")
-				.field("n", &self.n)
-				.field("pre", &self.pre)
-				.field("post", &"None")
-				.finish()
-		}
+		f.debug_struct("DoublyLinkedList")
+			.field("n", &self.n)
+			.field("list", &self.pre.borrow().next)
+			.finish()
     }
-}*/
+}
 
 
 impl<Item> Iterator for DoublyLinkedList<Item> {
@@ -109,14 +85,10 @@ where Item: Debug
 	}
 
 	pub fn add(&mut self, item: Item) {
-		let mut node: Node<Item> = Node::new(Some(item));
-		let mut value = Rc::new(RefCell::new(node));
-		println!("value = {:?}", value);
-		let mut last = None;
-		{
-			last = self.post.borrow_mut().prev.take();
-			println!("last = {:?}", last);
-		}
+		let node: Node<Item> = Node::new(Some(item));
+		let value = Rc::new(RefCell::new(node));
+		let last;
+		{ last = self.post.borrow_mut().prev.take(); }
 		{ self.post.borrow_mut().prev = Some(Rc::clone(&value)); }
 		{ value.borrow_mut().next = Some(Rc::clone(&self.post)); }
 		{
@@ -132,14 +104,12 @@ where Item: Debug
 fn main() {
 
 	let mut dl: DoublyLinkedList<i32> = DoublyLinkedList::new();
-	println!("{:?}", dl);
-	// DoublyLinkedList { n: 0, pre: RefCell { value: None }, post: RefCell { value: None } }
+	println!("{:#?}", dl);
 	dl.add(33);
-	println!("{:?}", dl);
+	println!("{:#?}", dl);
 	dl.add(50);
-	println!("{:?}", dl);
+	println!("{:#?}", dl);
 
-
-	println!("{:#?}", dl.pre.borrow_mut().next);
+	// println!("{:#?}", dl.pre.borrow_mut().next);
 }
 
