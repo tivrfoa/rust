@@ -81,16 +81,13 @@ where Item: Debug
 	pub fn add(&mut self, item: Item) {
 		let node: Node<Item> = Node::new(Some(item));
 		let value = Rc::new(RefCell::new(node));
-		let last;
-		{ last = self.post.borrow_mut().prev.take(); }
-		{ self.post.borrow_mut().prev = Some(Rc::clone(&value)); }
-		{ value.borrow_mut().next = Some(Rc::clone(&self.post)); }
-		{
-			let rc = Rc::clone(&value);
-			let last = last.unwrap();
-			last.borrow_mut().next = Some(rc);
-			value.borrow_mut().prev = Some(last);
-		}
+		let last = self.post.borrow_mut().prev.take();
+		self.post.borrow_mut().prev = Some(Rc::clone(&value));
+		value.borrow_mut().next = Some(Rc::clone(&self.post));
+		let last = last.unwrap();
+		last.borrow_mut().next = Some(Rc::clone(&value));
+		value.borrow_mut().prev = Some(last);
+		
 		self.n += 1;
 	}
 
@@ -163,5 +160,6 @@ fn main() {
 		println!("{:?}", r.borrow_mut().item);
 	}
 
+	println!("THEN END!");
 }
 
