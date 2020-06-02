@@ -113,8 +113,13 @@ impl<Item> Iterator for DoublyLinkedList<Item> {
 			let tmp = &self.current.borrow_mut().next;
 			match tmp {
 				Some(r) => {
-					new = Rc::clone(&r);
-					ret = Some(Rc::clone(&r));
+					if (r.borrow_mut().item.is_none()) {
+						new = Rc::clone(&self.pre);
+						ret = None;
+					} else {
+						new = Rc::clone(&r);
+						ret = Some(Rc::clone(&r));
+					}
 				},
 				None => {
 					new = Rc::clone(&self.pre);
