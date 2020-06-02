@@ -5,15 +5,15 @@ use std::fmt::{
 use std::rc::Rc;
 use std::cell::RefCell;
 
-struct Node<Item>
+struct Node<T>
 {
-	item: Option<Item>,
-	next: Option<Rc<RefCell<Node<Item>>>>,
-	prev: Option<Rc<RefCell<Node<Item>>>>,
+	item: Option<T>,
+	next: Option<Rc<RefCell<Node<T>>>>,
+	prev: Option<Rc<RefCell<Node<T>>>>,
 }
 
-impl<Item> Debug for Node<Item>
-where Item: Debug {
+impl<T> Debug for Node<T>
+where T: Debug {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
 		if self.item.is_none() {
 			return f.debug_struct("Node {}").finish();
@@ -26,8 +26,8 @@ where Item: Debug {
     }
 }
 
-impl<Item>  Node<Item> {
-	pub fn new(item: Option<Item>) -> Self {
+impl<T>  Node<T> {
+	pub fn new(item: Option<T>) -> Self {
 		Node {
 			item,
 			next: None,
@@ -36,15 +36,15 @@ impl<Item>  Node<Item> {
 	}
 }
 
-struct DoublyLinkedList<Item> {
+struct DoublyLinkedList<T> {
 	n: usize, // number of elements on list
-	pre: Rc<RefCell<Node<Item>>>, // sentinel before first item
-	post: Rc<RefCell<Node<Item>>>, // sentinel before last item
-	current: Rc<RefCell<Node<Item>>>, // used for iterator
+	pre: Rc<RefCell<Node<T>>>, // sentinel before first item
+	post: Rc<RefCell<Node<T>>>, // sentinel before last item
+	current: Rc<RefCell<Node<T>>>, // used for iterator
 }
 
-impl<Item> Debug for DoublyLinkedList<Item>
-where Item: Debug {
+impl<T> Debug for DoublyLinkedList<T>
+where T: Debug {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
 		f.debug_struct("DoublyLinkedList")
 			.field("n", &self.n)
@@ -53,8 +53,8 @@ where Item: Debug {
     }
 }
 
-impl <Item> DoublyLinkedList<Item>
-where Item: Debug
+impl <T> DoublyLinkedList<T>
+where T: Debug
 {
 	pub fn new() -> Self {
 		let pre_ref_node = Rc::new(RefCell::new(Node::new(None)));
@@ -78,8 +78,8 @@ where Item: Debug
 		self.n
 	}
 
-	pub fn add(&mut self, item: Item) {
-		let node: Node<Item> = Node::new(Some(item));
+	pub fn add(&mut self, item: T) {
+		let node: Node<T> = Node::new(Some(item));
 		let value = Rc::new(RefCell::new(node));
 		let last = self.post.borrow_mut().prev.take();
 		self.post.borrow_mut().prev = Some(Rc::clone(&value));
@@ -91,7 +91,7 @@ where Item: Debug
 		self.n += 1;
 	}
 
-	pub fn _next(&mut self) -> Rc<RefCell<Node<Item>>> {
+	pub fn _next(&mut self) -> Rc<RefCell<Node<T>>> {
 		let tmp = &self.pre.borrow_mut().next;
 		match tmp {
 			Some(r) => Rc::clone(&r),
@@ -100,8 +100,8 @@ where Item: Debug
 	}
 }
 
-impl<Item> Iterator for DoublyLinkedList<Item> {
-	type Item = Rc<RefCell<Node<Item>>>;
+impl<T> Iterator for DoublyLinkedList<T> {
+	type Item = Rc<RefCell<Node<T>>>;
 
 	fn next(&mut self) -> Option<Self::Item> {
 		let ret;
