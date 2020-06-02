@@ -103,8 +103,6 @@ where Item: Debug
 	}
 }
 
-// TODO
-
 impl<Item> Iterator for DoublyLinkedList<Item> {
 	type Item = Rc<RefCell<Node<Item>>>;
 
@@ -118,7 +116,10 @@ impl<Item> Iterator for DoublyLinkedList<Item> {
 					new = Rc::clone(&r);
 					ret = Some(Rc::clone(&r));
 				},
-				None => return None,
+				None => {
+					new = Rc::clone(&self.pre);
+					ret = None;
+				}
 			}
 		}
 		std::mem::replace(&mut self.current, new);
@@ -147,6 +148,12 @@ fn main() {
 	println!("{:#?}", dl);
 
 
+	println!("First iteration ...");
+	for r in &mut dl {
+		println!("{:?}", r.borrow_mut().item);
+	}
+
+	println!("Second iteration ...");
 	for r in dl {
 		println!("{:?}", r.borrow_mut().item);
 	}
