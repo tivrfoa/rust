@@ -5,11 +5,13 @@ use std::fmt::{
 use std::rc::Rc;
 use std::cell::RefCell;
 
+type NodeRef<T> = Rc<RefCell<Node<T>>>;
+
 struct Node<T>
 {
 	item: Option<T>,
-	next: Option<Rc<RefCell<Node<T>>>>,
-	prev: Option<Rc<RefCell<Node<T>>>>,
+	next: Option<NodeRef<T>>,
+	prev: Option<NodeRef<T>>,
 }
 
 impl<T> Debug for Node<T>
@@ -38,9 +40,9 @@ impl<T>  Node<T> {
 
 struct DoublyLinkedList<T> {
 	n: usize, // number of elements on list
-	pre: Rc<RefCell<Node<T>>>, // sentinel before first item
-	post: Rc<RefCell<Node<T>>>, // sentinel before last item
-	current: Rc<RefCell<Node<T>>>, // used for iterator
+	pre: NodeRef<T>, // sentinel before first item
+	post: NodeRef<T>, // sentinel before last item
+	current: NodeRef<T>, // used for iterator
 }
 
 impl<T> Debug for DoublyLinkedList<T>
@@ -91,7 +93,7 @@ where T: Debug
 		self.n += 1;
 	}
 
-	pub fn _next(&mut self) -> Rc<RefCell<Node<T>>> {
+	pub fn _next(&mut self) -> NodeRef<T> {
 		let tmp = &self.pre.borrow_mut().next;
 		match tmp {
 			Some(r) => Rc::clone(&r),
@@ -101,7 +103,7 @@ where T: Debug
 }
 
 impl<T> Iterator for DoublyLinkedList<T> {
-	type Item = Rc<RefCell<Node<T>>>;
+	type Item = NodeRef<T>;
 
 	fn next(&mut self) -> Option<Self::Item> {
 		let ret;
