@@ -7,7 +7,7 @@ use std::cell::RefCell;
 
 type NodeRef<T> = Rc<RefCell<Node<T>>>;
 
-struct Node<T>
+pub struct Node<T>
 {
 	item: Option<T>,
 	next: Option<NodeRef<T>>,
@@ -55,13 +55,17 @@ where T: Debug {
     }
 }
 
+pub fn new_empty_node<T>() -> NodeRef<T> {
+	Rc::new(RefCell::new(Node::new(None)))
+}
+
 impl <T> DoublyLinkedList<T>
 where T: Debug
 {
 	pub fn new() -> Self {
-		let pre_ref_node = Rc::new(RefCell::new(Node::new(None)));
+		let pre_ref_node = new_empty_node();
 		let current = Rc::clone(&pre_ref_node);
-		let post_ref_node = Rc::new(RefCell::new(Node::new(None)));
+		let post_ref_node = new_empty_node();
 		pre_ref_node.borrow_mut().next = Some(Rc::clone(&post_ref_node));
 		post_ref_node.borrow_mut().prev = Some(Rc::clone(&pre_ref_node));
 		DoublyLinkedList {
@@ -97,7 +101,7 @@ where T: Debug
 		let tmp = &self.pre.borrow_mut().next;
 		match tmp {
 			Some(r) => Rc::clone(&r),
-			None => Rc::new(RefCell::new(Node::new(None))),
+			None => new_empty_node(),
 		}
 	}
 }
