@@ -4,7 +4,7 @@ use piston_window::types::Color;
 use rand::{thread_rng, Rng};
 
 use crate::snake::{Direction, Snake};
-use crate::draw::{draw_block, draw_rectangle};
+use crate::draw::*;
 
 const FOOD_COLOR: Color = [0.80, 0.00, 0.00, 1.0];
 const BORDER_COLOR: Color = [0.00, 0.00, 0.00, 1.0];
@@ -72,7 +72,7 @@ impl Game {
 			Key::Down => Some(Direction::Down),
 			Key::Left => Some(Direction::Left),
 			Key::Right => Some(Direction::Right),
-			_ => None
+			_ => return,
 		};
 
 		if dir.unwrap() == self.snake.head_direction().opposite() {
@@ -96,13 +96,15 @@ impl Game {
 		self.snake.draw(con, g);
 
 		if self.food_exists {
-			draw_block(FOOD_COLOR, self.food_x, self.food_y, con, g);
+			// draw_block(FOOD_COLOR, self.food_x, self.food_y, con, g);
+			draw_circle(FOOD_COLOR, self.food_x, self.food_y, con, g);
 		}
 
-		draw_rectangle(BORDER_COLOR, 0, 0, self.width, 1, con, g);
-		draw_rectangle(BORDER_COLOR, 0, self.height - 1, self.width, 1, con, g);
-		draw_rectangle(BORDER_COLOR, 0, 0, 1, self.height, con, g);
-		draw_rectangle(BORDER_COLOR, self.width - 1, 0, 1, self.height, con, g);
+		// Draw borders
+		draw_rectangle(BORDER_COLOR, 0, 0, self.width, 1, con, g); // Up Border
+		draw_rectangle(BORDER_COLOR, 0, self.height - 1, self.width, 1, con, g); // Bottom Border
+		draw_rectangle(BORDER_COLOR, 0, 0, 1, self.height, con, g); // Left Border
+		draw_rectangle(BORDER_COLOR, self.width - 1, 0, 1, self.height, con, g); // Right Border
 
 		if self.game_over {
 			draw_rectangle(GAMEOVER_COLOR, 0, 0, self.width, self.height, con, g);
@@ -133,6 +135,7 @@ impl Game {
 		if self.food_exists && self.food_x == head_x && self.food_y == head_y {
 			self.food_exists = false;
 			self.snake.restore_tail();
+			self.snake.change_color();
 		}
 	}
 

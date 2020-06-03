@@ -1,4 +1,5 @@
 use piston_window::{
+	ellipse,
     rectangle,
     Context,
     G2d,
@@ -40,6 +41,18 @@ pub fn draw_rectangle(color: Color, x: i32, y: i32, width: i32,
 			BLOCK_SIZE * (width as f64),
 			BLOCK_SIZE * (height as f64),
 		],
+		con.transform,
+		g,
+	);
+}
+
+pub fn draw_circle(color: Color, x: i32, y: i32, con: &Context, g: &mut G2d) {
+	let gui_x = to_coord(x);
+	let gui_y = to_coord(y);
+
+	ellipse (
+		color,
+		[gui_x, gui_y, BLOCK_SIZE, BLOCK_SIZE],
 		con.transform,
 		g,
 	);

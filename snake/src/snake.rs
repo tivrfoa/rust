@@ -2,6 +2,8 @@ use std::collections::LinkedList;
 use piston_window::{Context, G2d};
 use piston_window::types::Color;
 
+use rand::{thread_rng, Rng};
+
 use crate::draw::draw_block;
 
 const RED: f32 = 0.00;
@@ -39,6 +41,7 @@ pub struct Snake {
 	direction: Direction,
 	body: LinkedList<Block>,
 	tail: Option<Block>,
+	color: Color,
 }
 
 
@@ -62,13 +65,28 @@ impl Snake {
 			direction: Direction::Right,
 			body,
 			tail: None,
+			color: SNAKE_COLOR,
 		}
 	}
 
 	pub fn draw(&self, con: &Context, g: &mut G2d) {
 		for block in &self.body {
-			draw_block(SNAKE_COLOR, block.x, block.y, con, g);
+			draw_block(self.color, block.x, block.y, con, g);
 		}
+	}
+
+	pub fn change_color(&mut self) {
+		self.color = Snake::get_snake_color();
+	}
+
+	fn get_snake_color() -> Color {
+		let mut rng = thread_rng();
+
+		let red = rng.gen_range(0.0f32, 1.0f32);
+		let green = rng.gen_range(0.0f32, 1.0f32);
+		let blue = rng.gen_range(0.0f32, 1.0f32);
+
+		[red, green, blue, OPACITY]
 	}
 
 	pub fn head_position(&self) -> (i32, i32) {
@@ -129,8 +147,8 @@ impl Snake {
 	}
 
 	pub fn restore_tail(&mut self) {
-		let block = self.tail.clone().unwrap();
-		self.body.push_back(block);
+		let block = self.tail.take();
+		self.body.push_back(block.unwrap());
 	}
 
 	pub fn overlap_tail(&self, x: i32, y: i32) -> bool {
