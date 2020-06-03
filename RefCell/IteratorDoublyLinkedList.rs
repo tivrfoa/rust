@@ -111,12 +111,12 @@ impl<T> Iterator for DoublyLinkedList<T> {
 
 	fn next(&mut self) -> Option<Self::Item> {
 		let ret;
-		let mut new;
+		let new;
 		{
 			let tmp = &self.current.borrow_mut().next;
 			match tmp {
 				Some(r) => {
-					if (r.borrow_mut().item.is_none()) {
+					if r.borrow_mut().item.is_none() {
 						new = Rc::clone(&self.pre);
 						ret = None;
 					} else {
@@ -149,7 +149,7 @@ fn main() {
 	// println!("{:#?}", dl.pre.borrow_mut().next);
 	//
 	
-	let mut r1 = dl._next();
+	let r1 = dl._next();
 	println!("{:#?}", r1);
 	r1.borrow_mut().item = Some(29);
 	println!("{:#?}", r1);
@@ -158,7 +158,10 @@ fn main() {
 
 	println!("First iteration ...");
 	for r in &mut dl {
-		println!("{:?}", r.borrow_mut().item);
+		let mut n = r.borrow_mut();
+		let item = n.item.unwrap();
+		println!("{:?}", item);
+		n.item = Some(item + 10);
 	}
 
 	println!("Second iteration ...");
