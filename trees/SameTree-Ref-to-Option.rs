@@ -56,8 +56,17 @@ fn main() {
 
 	println!("=================================");
 	let t = new_node(5);
+	// println!("t = {:#?}", *t); // cannot be dereferenced
+	match t {
+		Some(ref e) => {
+			println!("e = {:#?}", e);
+			println!("*e = {:#?}", *e);
+			println!("e.borrow() = {:#?}", e.borrow());
+		},
+		None => println!("None {:?}", t),
+	}
 
-	let tr = &t;
+	let tr = &t; // if "ref" is not used above: ^^ value borrowed here after partial move
 	match tr {
 		Some(e) => {
 			println!("e = {:#?}", e);
@@ -66,6 +75,8 @@ fn main() {
 		},
 		None => println!("None {:?}", tr),
 	}
+	println!("tr = {:#?}", tr);
+	println!("*tr = {:#?}", *tr);
 	println!("=================================");
 
 	println!("{:#?}", t);
